@@ -17,10 +17,10 @@ const mongoose = require('mongoose')
 //Routers
 const userRouter = require('./router/user')
 const expenseRouter = require('./router/expense')
-// const orderRouter = require('./router/purchase')
-// const forgotRouter = require('./router/forgot')
-// const saveurlRouter = require('./router/previous')
-// const premiumRouter = require('./router/premium')
+const orderRouter = require('./router/purchase')
+const forgotRouter = require('./router/forgot')
+const saveurlRouter = require('./router/previous')
+const premiumRouter = require('./router/premium')
 
 //Modal
 const User = require('./model/user')
@@ -40,11 +40,11 @@ app.use(morgan('combined',{stream:accessLogStream}))
 
 //api
 app.use('/api/v1',userRouter)
-// app.use('/api/v1',saveurlRouter)
+app.use('/api/v1',saveurlRouter)
 app.use('/api/v1/expense',expenseRouter)
-// app.use('/purchase',orderRouter)
-// app.use('/',forgotRouter)
-// app.use('/api/v1',premiumRouter)
+app.use('/purchase',orderRouter)
+app.use('/',forgotRouter)
+app.use('/api/v1',premiumRouter)
 
 //error-log
  app.use(expressWinston.errorLogger({

@@ -9,7 +9,8 @@ exports.purchasePremium =  async (req,res,next)=>{
         })
         const amount = 2500
         const order = await rzp.orders.create({ amount, currency: 'INR' })
-        await Order.create({ orderid: order.id, status: 'PENDING', userId: req.user.id });
+        const result = new Order({ orderid: order.id, status: 'PENDING', userId: req.user})
+        await result.save()
         return res.json({ order, key_id: rzp.key_id });
     } catch (error) {
         res.status(500).json({message:'controller Error'})
@@ -19,14 +20,10 @@ exports.purchasePremium =  async (req,res,next)=>{
 exports.purchaseUpdate = async (req,res,next)=>{
     try{
         const {payment_id,order_id} = req.body
-        const order = await Order.findOne({where:{orderid:order_id}})
-        const promise1 = req.user.update({ispremiumuser:true})
-        const promise2 = order.update({paymentid:payment_id,status:'SUCCESS'})
-        Promise.all([promise1,promise2]).then(()=>{
-            return res.status(202).json({success:true,message:'Transaction completed!!'})
-        }).catch(err=>{
-            throw new Error(err)
-        })
+        const order = await Order.findOne({orderid:order_id})
+        await req.user.updatePremium()
+        await order.update(payment_id,'SUCCESS')
+        res.status(202).json({success:true,message:'Transaction completed!!'})
     } catch(error){
         res.status(403).json({err:error,message:'Something went Wrong'})
     }

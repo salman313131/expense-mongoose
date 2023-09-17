@@ -39,7 +39,7 @@ function showOutput(user){
     const total = Number(user.salary)-Number(user.spending)
     delBtn.textContent = 'delete'
     delBtn.classList.add('delete')
-    delBtn.dataset.id = user.id
+    delBtn.dataset.id = user._id
     td.appendChild(delBtn)
     row.innerHTML = `
         <td>${user.date}-${user.month}-${user.year}</td>

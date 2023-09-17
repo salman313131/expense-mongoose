@@ -14,17 +14,32 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
+    ispremiumuser:{
+        type: Boolean,
+        default: false
+    },
     totalExpense:{
-        type:Number
+        type:Number,
+        default:0
     },
     totalSalary:{
-        type:Number
+        type:Number,
+        default:0
     }
 })
 
 userSchema.methods.update = function(newExpenseData,newIncomeData){
         this.totalExpense+=newExpenseData
         this.totalSalary+=newIncomeData
+        return this.save()
+}
+userSchema.methods.updateDelete = function(newExpenseData,newIncomeData){
+        this.totalExpense=newExpenseData
+        this.totalSalary=newIncomeData
+        return this.save()
+}
+userSchema.methods.updatePremium = function(){
+        this.ispremiumuser=true
         return this.save()
 }
 

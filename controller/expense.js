@@ -29,11 +29,12 @@ function uploadToS3(data,filename){
 
 exports.downloadFiles= async(req,res,next)=>{
     try {
-        const expenses = await Expense.findAll({where:{userId:req.user.id}})
+        const expenses = await Expense.find({userId:req.user})
         const stringifyExpenses = JSON.stringify(expenses)
         const filename = `expenses${req.user.id}/${new Date()}.txt`
         const fileUrl = await uploadToS3(stringifyExpenses,filename)
-        await Saveurl.create({url:fileUrl,userId:req.user.id})
+        const saveurl = new Saveurl({url:fileUrl,userId:req.user})
+        await saveurl.save()
         res.status(200).json({fileUrl,success:true})
     } catch (error) {
         res.status(500).json({error,message:'failed'})
@@ -46,7 +47,7 @@ exports.getAllDetails=(async (req,res,next)=>{
     const startIndex = (page-1)*limit
     const endIndex = page*limit
     try {
-        const result = await Expense.findAll({where:{userId:req.user.id}})
+        const result = await Expense.find({userId:req.user})
         const finalresult = {}
         if(endIndex<result.length){
 
@@ -64,7 +65,7 @@ exports.getAllDetails=(async (req,res,next)=>{
 })
 exports.getDetail = (async (req,res,next)=>{
     try {
-        const response = await Expense.findAll()
+        const response = await Expense.find()
         res.status(200).json(response)
     } catch (error) {
         res.status(500).json({success:false,error})
@@ -85,19 +86,15 @@ exports.postDetails = (async(req,res,next)=>{
     }
 })
 exports.deleteUser = (async (req,res,next)=>{
-    const t = await sequelize.transaction()
     try {
         const userId = req.params.userId
-        const deleteUserDetail = await Expense.findOne({where:{id:userId},attributes:['salary','spending'],transaction:t})
+        const deleteUserDetail = await Expense.findOne({_id:userId})
         const newSpendingData = Number(req.user.totalExpense)-Number(deleteUserDetail.spending)
         const newSalaryData = Number(req.user.totalSalary)-Number(deleteUserDetail.salary)
-        const updateUser = User.update({totalExpense:newSpendingData,totalSalary:newSalaryData},{where:{id:req.user.id},transaction:t})
-        const deleteExpense = Expense.destroy({where:{id:userId},transaction:t})
-        const result = await Promise.all([updateUser,deleteExpense])
-        await t.commit();
+        await req.user.updateDelete(newSpendingData,newSalaryData)
+        const result = await Expense.deleteOne({_id:userId})
         res.status(204).json(result);
     } catch (error) {
-        await t.rollback();
         console.log(error)
         res.status(500).json(error)
     }

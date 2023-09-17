@@ -2,7 +2,6 @@ const { v4: uuidv4 } = require('uuid')
 const Forgot = require('../model/forgot')
 const User = require('../model/user')
 const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
 const SibApiV3Sdk = require('sib-api-v3-sdk')
 const path = require('path')
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -12,8 +11,9 @@ exports.resetPassword = async (req,res,next)=>{
     try {
         const resetEmail = req.body.email
         const uniqueId = uuidv4()
-        const user = await User.findOne({where:{email:resetEmail},arrtibutes:['id']})
-        await Forgot.create({id:uniqueId,isactive:true,userId:user.id})
+        const user = await User.findOne({email:resetEmail})
+        const forgot = new Forgot({isactive:true,userId:user._id,uuid:uniqueId})
+        await forgot.save()
         var apiKey = defaultClient.authentications['api-key'];
         apiKey.apiKey = process.env.SENDIN_API_KEY;
         const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
@@ -44,9 +44,9 @@ exports.resetPassword = async (req,res,next)=>{
 exports.getLink = async (req,res,next)=>{
     const uuid = req.params.uniqueId
     try {
-        const result = await Forgot.findOne({where:{id:uuid}})
+        const result = await Forgot.findOne({uuid:uuid})
         if(result){
-            await Forgot.update({isactive:false},{where:{id:uuid}})
+            await Forgot.updateOne({uuid:uuid},{isactive:false})
             const filePath = path.join(root, 'public', 'forgot.html')
             res.sendFile(filePath)
 
@@ -65,7 +65,7 @@ exports.completedReset = async (req,res,next)=>{
     try {
         const salt=10
         const hashedPassword = await bcrypt.hash(password,salt)
-        await User.update({password:hashedPassword},{where:{email:email}})
+        await User.updateOne({email:email},{password:hashedPassword})
         res.json({success:true})
     } catch (error) {
         console.log(error)

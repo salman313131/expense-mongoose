@@ -56,7 +56,7 @@ li {
                         a.textContent = `Click to download`
                         const li = document.createElement('li')
                         li.appendChild(a)
-                        li.appendChild(document.createTextNode(`     creation time ${response.data[i].createdAt}`))
+                        li.appendChild(document.createTextNode(`    ${i+1}`))
                         ul.appendChild(li)
                     }
                 } catch (error) {
